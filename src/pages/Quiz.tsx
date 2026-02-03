@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import Header from '@/components/Header';
@@ -10,9 +10,6 @@ import { useSound } from '@/sound/SoundProvider';
 const Quiz = () => {
   const { subject, difficulty } = useParams<{ subject: string; difficulty?: string }>();
   const navigate = useNavigate();
-  const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [score, setScore] = useState(0);
-  const [isComplete, setIsComplete] = useState(false);
   const { muted, toggleMute } = useSound();
 
   const quiz = quizzes.find(q => q.id === subject);
@@ -22,16 +19,39 @@ const Quiz = () => {
       : 'easy';
   const questions = quiz?.levels[selectedDifficulty];
 
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [answers, setAnswers] = useState<(number | null)[]>(() =>
+    questions ? Array(questions.length).fill(null) : []
+  );
+  const [isComplete, setIsComplete] = useState(false);
+
+  useEffect(() => {
+    if (!questions) return;
+    setCurrentQuestion(0);
+    setIsComplete(false);
+    setAnswers(Array(questions.length).fill(null));
+  }, [questions]);
+
   if (!quiz || !questions) {
     navigate('/');
     return null;
   }
 
-  const handleAnswer = (isCorrect: boolean) => {
-    if (isCorrect) {
-      setScore(prev => prev + 1);
-    }
+  const score = answers.reduce((total, answer, index) => {
+    if (answer === null) return total;
+    return answer === questions[index].correctAnswer ? total + 1 : total;
+  }, 0);
 
+  const handleAnswer = (selectedIndex: number) => {
+    setAnswers(prev => {
+      const next = [...prev];
+      next[currentQuestion] = selectedIndex;
+      return next;
+    });
+  };
+
+  const handleNext = () => {
+    if (answers[currentQuestion] === null) return;
     if (currentQuestion + 1 < questions.length) {
       setCurrentQuestion(prev => prev + 1);
     } else {
@@ -39,10 +59,16 @@ const Quiz = () => {
     }
   };
 
+  const handleBack = () => {
+    if (currentQuestion === 0) return;
+    setIsComplete(false);
+    setCurrentQuestion(prev => Math.max(0, prev - 1));
+  };
+
   const handleRestart = () => {
     setCurrentQuestion(0);
-    setScore(0);
     setIsComplete(false);
+    setAnswers(Array(questions.length).fill(null));
   };
 
   const handleHome = () => {
@@ -75,6 +101,12 @@ const Quiz = () => {
               questionNumber={currentQuestion + 1}
               totalQuestions={questions.length}
               onAnswer={handleAnswer}
+              onBack={handleBack}
+              canGoBack={currentQuestion > 0}
+              onNext={handleNext}
+              canGoNext={answers[currentQuestion] !== null}
+              isLast={currentQuestion === questions.length - 1}
+              lockedAnswer={answers[currentQuestion]}
             />
           )}
         </AnimatePresence>

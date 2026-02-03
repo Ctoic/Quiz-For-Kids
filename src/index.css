@@ -129,6 +129,34 @@
     animation: confetti 0.5s ease-out;
   }
 
+  .rainbow-bar {
+    background: linear-gradient(
+      90deg,
+      #ff6b6b,
+      #ffd93d,
+      #6bcb77,
+      #4d96ff,
+      #9d4edd,
+      #ff6b6b
+    );
+    background-size: 300% 100%;
+    animation: rainbow-slide 3s linear infinite;
+  }
+
+  .rainbow-card {
+    background: linear-gradient(
+      135deg,
+      #ff6b6b,
+      #ffd93d,
+      #6bcb77,
+      #4d96ff,
+      #9d4edd,
+      #ff6b6b
+    );
+    background-size: 400% 400%;
+    animation: rainbow-sheen 8s ease infinite;
+  }
+
   @keyframes wiggle {
     0%, 100% { transform: rotate(-3deg); }
     50% { transform: rotate(3deg); }
@@ -144,5 +172,16 @@
     0% { transform: scale(0) rotate(0deg); }
     50% { transform: scale(1.2) rotate(180deg); }
     100% { transform: scale(1) rotate(360deg); }
+  }
+
+  @keyframes rainbow-slide {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 100% 50%; }
+  }
+
+  @keyframes rainbow-sheen {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
   }
 }

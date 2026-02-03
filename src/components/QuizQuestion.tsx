@@ -1,23 +1,44 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, X } from 'lucide-react';
 import type { Question } from '@/data/quizData';
 import { useSound } from '@/sound/SoundProvider';
+import { Button } from '@/components/ui/button';
 
 interface QuizQuestionProps {
   question: Question;
-  onAnswer: (isCorrect: boolean) => void;
+  onAnswer: (selectedIndex: number) => void;
+  onBack?: () => void;
+  canGoBack?: boolean;
+  onNext?: () => void;
+  canGoNext?: boolean;
+  isLast?: boolean;
+  lockedAnswer?: number | null;
   questionNumber: number;
   totalQuestions: number;
 }
 
-const QuizQuestion = ({ question, onAnswer, questionNumber, totalQuestions }: QuizQuestionProps) => {
+const QuizQuestion = ({
+  question,
+  onAnswer,
+  onBack,
+  canGoBack = false,
+  onNext,
+  canGoNext = false,
+  isLast = false,
+  lockedAnswer = null,
+  questionNumber,
+  totalQuestions
+}: QuizQuestionProps) => {
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
   const { playCorrect, playWrong } = useSound();
+  const isLocked = typeof lockedAnswer === 'number';
+  const displayedSelected = isLocked ? lockedAnswer : selectedAnswer;
+  const shouldReveal = showResult || isLocked;
 
   const handleSelect = (index: number) => {
-    if (showResult) return;
+    if (showResult || isLocked) return;
     
     setSelectedAnswer(index);
     setShowResult(true);
@@ -29,23 +50,19 @@ const QuizQuestion = ({ question, onAnswer, questionNumber, totalQuestions }: Qu
       playWrong();
     }
     
-    setTimeout(() => {
-      onAnswer(isCorrect);
-      setSelectedAnswer(null);
-      setShowResult(false);
-    }, 1500);
+    onAnswer(index);
   };
 
   const getOptionClass = (index: number) => {
-    if (!showResult) {
-      return 'bg-card hover:bg-muted border-2 border-border hover:border-primary';
+    if (!shouldReveal) {
+      return 'bg-cyan-100 hover:bg-cyan-200 border-2 border-cyan-300 hover:border-cyan-400';
     }
     
     if (index === question.correctAnswer) {
       return 'bg-kid-green text-primary-foreground border-2 border-kid-green';
     }
     
-    if (index === selectedAnswer && index !== question.correctAnswer) {
+    if (index === displayedSelected && index !== question.correctAnswer) {
       return 'bg-destructive text-destructive-foreground border-2 border-destructive';
     }
     
@@ -69,15 +86,42 @@ const QuizQuestion = ({ question, onAnswer, questionNumber, totalQuestions }: Qu
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${(questionNumber / totalQuestions) * 100}%` }}
-            className="h-full bg-primary rounded-full"
+            className="h-full rounded-full rainbow-bar"
             transition={{ duration: 0.5 }}
           />
+        </div>
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+          {onBack ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onBack}
+              disabled={!canGoBack || showResult}
+              className="rounded-xl font-semibold"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Previous Question
+            </Button>
+          ) : (
+            <div />
+          )}
+          {onNext ? (
+            <Button
+              size="sm"
+              onClick={onNext}
+              disabled={!canGoNext}
+              className="rounded-xl font-semibold"
+            >
+              {isLast ? 'Finish Quiz' : 'Next Question'}
+              <ArrowRight className="w-4 h-4" />
+            </Button>
+          ) : null}
         </div>
       </div>
 
       {/* Question */}
       <motion.div
-        className="bg-card rounded-3xl p-6 md:p-8 shadow-kid mb-6"
+        className="bg-cyan-200 rounded-3xl p-6 md:p-8 shadow-kid mb-6"
         layoutId="question-card"
       >
         <h2 className="text-xl md:text-2xl font-bold text-center text-card-foreground">
@@ -91,14 +135,14 @@ const QuizQuestion = ({ question, onAnswer, questionNumber, totalQuestions }: Qu
           <motion.button
             key={index}
             onClick={() => handleSelect(index)}
-            disabled={showResult}
+            disabled={showResult || isLocked}
             className={`${getOptionClass(index)} p-4 md:p-5 rounded-2xl text-left font-semibold text-base md:text-lg transition-all duration-300 flex items-center justify-between`}
-            whileHover={!showResult ? { scale: 1.02 } : {}}
-            whileTap={!showResult ? { scale: 0.98 } : {}}
+            whileHover={!showResult && !isLocked ? { scale: 1.02 } : {}}
+            whileTap={!showResult && !isLocked ? { scale: 0.98 } : {}}
           >
             <span>{option}</span>
             <AnimatePresence>
-              {showResult && index === question.correctAnswer && (
+              {shouldReveal && index === question.correctAnswer && (
                 <motion.div
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
@@ -107,7 +151,7 @@ const QuizQuestion = ({ question, onAnswer, questionNumber, totalQuestions }: Qu
                   <Check className="w-5 h-5" />
                 </motion.div>
               )}
-              {showResult && index === selectedAnswer && index !== question.correctAnswer && (
+              {shouldReveal && index === displayedSelected && index !== question.correctAnswer && (
                 <motion.div
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
@@ -123,7 +167,7 @@ const QuizQuestion = ({ question, onAnswer, questionNumber, totalQuestions }: Qu
 
       {/* Explanation */}
       <AnimatePresence>
-        {showResult && question.explanation && (
+        {shouldReveal && question.explanation && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

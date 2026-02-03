@@ -21,17 +21,19 @@ const SubjectCard = ({ title, emoji, color, onClick, questionsCount }: SubjectCa
       whileHover={{ scale: 1.05, y: -5 }}
       whileTap={{ scale: 0.95 }}
       onClick={onClick}
-      className={`${colorClasses[color]} w-full p-6 md:p-8 rounded-3xl text-primary-foreground shadow-kid transition-all duration-300 cursor-pointer`}
+      className={`${colorClasses[color]} w-full p-3 md:p-4 rounded-3xl text-primary-foreground shadow-kid transition-all duration-300 cursor-pointer`}
     >
-      <motion.div
-        animate={{ rotate: [0, -10, 10, 0] }}
-        transition={{ duration: 2, repeat: Infinity, repeatDelay: 1 }}
-        className="text-5xl md:text-6xl mb-4"
-      >
-        {emoji}
-      </motion.div>
-      <h3 className="text-xl md:text-2xl font-bold mb-2">{title}</h3>
-      <p className="text-sm md:text-base opacity-90">{questionsCount} Questions</p>
+      <div className="rainbow-card rounded-2xl p-4 md:p-5">
+        <motion.div
+          animate={{ rotate: [0, -10, 10, 0] }}
+          transition={{ duration: 2, repeat: Infinity, repeatDelay: 1 }}
+          className="text-5xl md:text-6xl mb-4"
+        >
+          {emoji}
+        </motion.div>
+        <h3 className="text-xl md:text-2xl font-bold mb-2">{title}</h3>
+        <p className="text-sm md:text-base opacity-90">{questionsCount} Questions</p>
+      </div>
     </motion.button>
   );
 };
