@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, X } from 'lucide-react';
 import type { Question } from '@/data/quizData';
+import { useSound } from '@/sound/SoundProvider';
 
 interface QuizQuestionProps {
   question: Question;
@@ -13,15 +14,23 @@ interface QuizQuestionProps {
 const QuizQuestion = ({ question, onAnswer, questionNumber, totalQuestions }: QuizQuestionProps) => {
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
+  const { playCorrect, playWrong } = useSound();
 
   const handleSelect = (index: number) => {
     if (showResult) return;
     
     setSelectedAnswer(index);
     setShowResult(true);
+    const isCorrect = index === question.correctAnswer;
+
+    if (isCorrect) {
+      playCorrect();
+    } else {
+      playWrong();
+    }
     
     setTimeout(() => {
-      onAnswer(index === question.correctAnswer);
+      onAnswer(isCorrect);
       setSelectedAnswer(null);
       setShowResult(false);
     }, 1500);
